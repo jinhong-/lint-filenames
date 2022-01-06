@@ -17,7 +17,15 @@ async function run(): Promise<void> {
       core.getInput('pattern', { required: true }) || DEFAULT_PATTERN
     );
 
-    const output = await validateFilenames(path, pattern);
+    const mode = core.getInput('mode', { required: false }) || 'PATH';
+    const ignoreGlob = core.getInput('ignoreGlob', { required: false }) || null;
+
+    const output = await validateFilenames(
+      path,
+      pattern,
+      mode === 'GLOB' ? 'GLOB' : 'PATH',
+      ignoreGlob ? [ignoreGlob] : []
+    );
 
     core.setOutput('total-files-analyzed', output.totalFilesAnalyzed);
 

@@ -5,13 +5,20 @@ branding:
   color: white
 inputs:
   path:
-    description: 'The path to a directory to check the filenames.'
+    description: 'The path to a directory or glob to check the filenames.'
     required: true
     default: './'
   pattern:
     description: 'The regex pattern to match for each of the files in the given directory'
     required: true
     default: '/.+/'
+  mode:
+    description: 'PATH or GLOB mode'
+    required: false
+    default: 'PATH'
+  ignoreGlob:
+    description: 'Glob pattern to ignore'
+    required: false
 outputs:
   total-files-analyzed:
     description: 'The number of files analyzed.'
