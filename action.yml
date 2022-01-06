@@ -17,7 +17,7 @@ inputs:
     required: false
     default: 'PATH'
   ignoreGlob:
-    description: 'Glob pattern to ignore'
+    description: 'Glob patterns to ignore (multi-line)'
     required: false
 outputs:
   total-files-analyzed:
