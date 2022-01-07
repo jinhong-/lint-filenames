@@ -1,17 +1,16 @@
-import * as pathp from 'path';
 import fs from 'fs';
 import glob from 'glob-promise';
 
 export async function validateFilenames(
-  pathOrGlob: string,
+  path: string,
   pattern: RegExp,
-  mode?: 'PATH' | 'GLOB',
+  globPattern?: string,
   ignoreGlob?: string[]
 ): Promise<{
   totalFilesAnalyzed: number;
   failedFiles: string[];
 }> {
-  console.log(`ℹ️  Path:    \t\t'${pathOrGlob}'`);
+  console.debug(`ℹ️  Path:    \t\t'${path}'`);
   console.log(`ℹ️  Pattern: \t\t${pattern}`);
   const opendir = fs.promises.opendir;
   const failedFiles: string[] = [];
@@ -22,17 +21,16 @@ export async function validateFilenames(
 
     let pathsToAnalyze: string[];
 
-    if (mode === 'GLOB') {
-      let matches = await glob(pathOrGlob, {
+    if (globPattern) {
+      const matches = await glob(globPattern, {
         dot: true,
         ignore: ignoreGlob,
-      });
-      matches = matches.map(function (match) {
-        return pathp.relative('.', match);
+        cwd: path,
+        nodir: true,
       });
       pathsToAnalyze = matches;
     } else {
-      const dir = await opendir(pathOrGlob);
+      const dir = await opendir(path);
       pathsToAnalyze = [];
       for await (const dirent of dir) {
         if (dirent.isDirectory()) {
@@ -44,16 +42,16 @@ export async function validateFilenames(
 
     for (const p of pathsToAnalyze) {
       if (pattern.test(p)) {
-        console.log(`  ✔️  ${p}`);
+        console.debug(`  ✔️  ${p}`);
       } else {
-        console.log(`  ❌  ${p}`);
+        console.debug(`  ❌  ${p}`);
         failedFiles.push(p);
       }
     }
     totalFilesAnalyzed = pathsToAnalyze.length;
 
     console.log('Verification finished.');
-    console.log(`ℹ️  Files analyzed: \t${totalFilesAnalyzed}`);
+    console.debug(`ℹ️  Files analyzed: \t${totalFilesAnalyzed}`);
   } catch (error) {
     throw new Error('Execution failed, see log above. ❌');
   }

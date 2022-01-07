@@ -12,6 +12,7 @@ const TEST_CONFIGS = {
   noDot: { path: '04-no-dot-files', pattern: '^[^\\.].+$' },
   containsA: { path: '05-contains-a-files', pattern: 'a+' },
   json: { path: '06-json-files', pattern: '\\.json$' },
+  globbing: { path: '07-nested-globbing', pattern: '\\.json$' },
 };
 
 let spy: jest.SpyInstance;
@@ -84,5 +85,20 @@ describe('Name of the group', () => {
     const expected = { totalFilesAnalyzed: 5, failedFiles: [] };
 
     await expect(validateFilenames(path, pattern)).resolves.toEqual(expected);
+  });
+
+  it('06 - (Glob) Passes for nested json files `*.json`', async () => {
+    const testConfig = TEST_CONFIGS.globbing;
+    const path = nodePath.join(__dirname, 'test-files', testConfig.path);
+    const pattern = new RegExp(testConfig.pattern);
+
+    const expected = { totalFilesAnalyzed: 2, failedFiles: [] };
+
+    await expect(
+      validateFilenames(path, pattern, '**', [
+        'ignore-folder-1/**',
+        'ignore-folder-2/**',
+      ])
+    ).resolves.toEqual(expected);
   });
 });

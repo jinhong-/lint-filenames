@@ -48,9 +48,9 @@ function run() {
             console.log('====================');
             const path = core.getInput('path', { required: true }) || DEFAULT_PATH;
             const pattern = new RegExp(core.getInput('pattern', { required: true }) || DEFAULT_PATTERN);
-            const mode = core.getInput('mode', { required: false }) || 'PATH';
-            const ignoreGlob = core.getInput('ignoreGlob', { required: false }) || null;
-            const output = yield (0, validate_filenames_1.validateFilenames)(path, pattern, mode === 'GLOB' ? 'GLOB' : 'PATH', ignoreGlob ? [ignoreGlob] : []);
+            const globPattern = core.getInput('globPattern', { required: false }) || 'PATH';
+            const ignoreGlob = core.getMultilineInput('ignoreGlob', { required: false }) || [];
+            const output = yield (0, validate_filenames_1.validateFilenames)(path, pattern, globPattern, ignoreGlob);
             core.setOutput('total-files-analyzed', output.totalFilesAnalyzed);
             // Get the JSON webhook payload for the event that triggered the workflow
             const payload = JSON.stringify(github.context.payload, undefined, 2);
@@ -76,25 +76,6 @@ run();
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -116,13 +97,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.validateFilenames = void 0;
-const pathp = __importStar(__nccwpck_require__(1017));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const glob_promise_1 = __importDefault(__nccwpck_require__(8252));
-function validateFilenames(pathOrGlob, pattern, mode, ignoreGlob) {
+function validateFilenames(path, pattern, globPattern, ignoreGlob) {
     var e_1, _a;
     return __awaiter(this, void 0, void 0, function* () {
-        console.log(`ℹ️  Path:    \t\t'${pathOrGlob}'`);
+        console.debug(`ℹ️  Path:    \t\t'${path}'`);
         console.log(`ℹ️  Pattern: \t\t${pattern}`);
         const opendir = fs_1.default.promises.opendir;
         const failedFiles = [];
@@ -130,18 +110,17 @@ function validateFilenames(pathOrGlob, pattern, mode, ignoreGlob) {
         try {
             console.log('Verification starting...');
             let pathsToAnalyze;
-            if (mode === 'GLOB') {
-                let matches = yield (0, glob_promise_1.default)(pathOrGlob, {
+            if (globPattern) {
+                const matches = yield (0, glob_promise_1.default)(globPattern, {
                     dot: true,
                     ignore: ignoreGlob,
-                });
-                matches = matches.map(function (match) {
-                    return pathp.relative('.', match);
+                    cwd: path,
+                    nodir: true,
                 });
                 pathsToAnalyze = matches;
             }
             else {
-                const dir = yield opendir(pathOrGlob);
+                const dir = yield opendir(path);
                 pathsToAnalyze = [];
                 try {
                     for (var dir_1 = __asyncValues(dir), dir_1_1; dir_1_1 = yield dir_1.next(), !dir_1_1.done;) {
@@ -162,16 +141,16 @@ function validateFilenames(pathOrGlob, pattern, mode, ignoreGlob) {
             }
             for (const p of pathsToAnalyze) {
                 if (pattern.test(p)) {
-                    console.log(`  ✔️  ${p}`);
+                    console.debug(`  ✔️  ${p}`);
                 }
                 else {
-                    console.log(`  ❌  ${p}`);
+                    console.debug(`  ❌  ${p}`);
                     failedFiles.push(p);
                 }
             }
             totalFilesAnalyzed = pathsToAnalyze.length;
             console.log('Verification finished.');
-            console.log(`ℹ️  Files analyzed: \t${totalFilesAnalyzed}`);
+            console.debug(`ℹ️  Files analyzed: \t${totalFilesAnalyzed}`);
         }
         catch (error) {
             throw new Error('Execution failed, see log above. ❌');

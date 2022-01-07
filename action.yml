@@ -12,10 +12,9 @@ inputs:
     description: 'The regex pattern to match for each of the files in the given directory'
     required: true
     default: '/.+/'
-  mode:
-    description: 'PATH or GLOB mode'
+  globPattern:
+    description: 'Glob pattern to use for specified path'
     required: false
-    default: 'PATH'
   ignoreGlob:
     description: 'Glob patterns to ignore (multi-line)'
     required: false

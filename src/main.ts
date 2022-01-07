@@ -17,13 +17,15 @@ async function run(): Promise<void> {
       core.getInput('pattern', { required: true }) || DEFAULT_PATTERN
     );
 
-    const mode = core.getInput('mode', { required: false }) || 'PATH';
-    const ignoreGlob = core.getMultilineInput('ignoreGlob', { required: false }) || [];
+    const globPattern =
+      core.getInput('globPattern', { required: false }) || 'PATH';
+    const ignoreGlob =
+      core.getMultilineInput('ignoreGlob', { required: false }) || [];
 
     const output = await validateFilenames(
       path,
       pattern,
-      mode === 'GLOB' ? 'GLOB' : 'PATH',
+      globPattern,
       ignoreGlob
     );
 
